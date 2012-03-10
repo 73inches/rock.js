@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=320"/>
+    <title>Rock.js | Rockdown</title>
+    <link rel="stylesheet" href="css/rock.css" type="text/css">
+    <link rel="stylesheet" href="css/rocktheme/style.css" type="text/css">
+    <style type="text/css">
+        body {
+            background: #f4f3ef;
+            margin: 50px 0 0 50px;
+            font-family: "Trebuchet MS", Helvetica, Verdana, sans-serif;
+            font-size: 14px;
+        }
+
+        .rockradio {
+            background: #f09;
+            height: 120px;
+            width: 120px;
+            display: block;
+        }
+
+        .checked {
+            background: yellow;
+        }
+
+        .rockradio span {
+            border: 1px solid #000;
+        }
+        div {
+            float:left;
+            width:200px;
+            height:100px;
+        }
+
+    </style>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery.rock.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function ($) {
+            $('select,input').rocks({
+
+                buttonMarkup:'<span></span>',
+                checked:'x',
+                unchecked:'o',
+
+                onChange:function () {
+                    //alert($('input[name="food"]:checked').val());
+                }
+            });
+            // fuoc, eat this!
+            document.getElementsByTagName('body')[0].style.visibility = '';
+        });
+
+    </script>
+</head>
+<body>
+<script>document.getElementsByTagName('body')[0].style.visibility = 'hidden';</script>
+<h1>Rock.js</h1>
+
+<div><label for="beer"><input checked="checked" id="beer" type="radio" name="drink" value="beer"/></label></div>
+<div><label for="vodka"><input id="vodka" type="radio" name="drinkxx" value="vodka"/>label inside</label></div>
+<div><label for="wine"><input id="wine" type="radio" name="drink" value="wine"/></label></div>
+
+<div><input id="hamburger" type="radio" name="food" value="hamburger"/><label for="hamburger">label outside</label></div>
+<div><label for="fries"><input id="fries" type="radio" name="food" value="fries"/></label></div>
+<div><label for="icecream"><input id="icecream" type="radio" name="food" value="icecream"/></label></div>
+</body>
+</html>
