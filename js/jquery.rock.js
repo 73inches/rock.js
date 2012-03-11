@@ -166,23 +166,22 @@
 
 
                 $this.hide();
-                $this.bind('change', function (e) {
 
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-
-                    $button.trigger('rock_change_state');
-                });
 
                 $this.bind('click',function(e){
                     e.preventDefault();
-                    e.stopPropagation();
+
+                                        e.stopImmediatePropagation();
+
+                    $button.trigger('rock_change_state')
                 });
 
                 // just for ie6 to ie8
                 $('label[for="' + id + '"]').bind('click', function (e) {
                     e.preventDefault();
-
+                    e.stopImmediatePropagation();
+                    //console.log('zzz');
+                    $this.trigger('change');
                     $button.trigger('rock_change_state')
 
                 });
@@ -194,7 +193,7 @@
                         e.stopImmediatePropagation();
 
 
-
+                        $button.trigger('rock_change_state');
                         $this.trigger('change');
                     }).bind('rock_change_state', function () {
 
