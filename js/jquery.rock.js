@@ -33,11 +33,16 @@
             buttons = {},
             // private methods
 
+
+            unsetButton = function($button){
+                            $button.removeClass(settings.checkedClass);
+                            changeHandleTextAndAria($button,settings.unchecked);
+                        },
+
             setButton = function ($button, name) {
                 if(typeof name !== "undefined"){
                    $.each(buttons[name],function(){
-                                this.removeClass(settings.checkedClass);
-                                changeHandleTextAndAria(this,settings.unchecked);
+                                unsetButton(this);
 
                    });
                 }
@@ -46,6 +51,7 @@
                 changeHandleTextAndAria($button,settings.checked);
 
             },
+
 
             changeHandleTextAndAria = function ($element, html) {
                 var text = $(html).text();
@@ -148,7 +154,8 @@
 
 
                 $button = $('<button/>', {
-                    'class':classname
+                    'class':classname,
+                    'type':'button'
                 }).text(settings.unchecked).wrapInner($(settings.buttonMarkup));
 
 
@@ -168,21 +175,22 @@
                 $this.hide();
 
 
+
                 $this.bind('click',function(e){
-                    e.preventDefault();
+                    e.stopPropagation();
 
-                                        e.stopImmediatePropagation();
 
-                    $button.trigger('rock_change_state')
                 });
+
+
 
                 // just for ie6 to ie8
                 $('label[for="' + id + '"]').bind('click', function (e) {
                     e.preventDefault();
-                    e.stopImmediatePropagation();
-                    //console.log('zzz');
-                    $this.trigger('change');
-                    $button.trigger('rock_change_state')
+                    console.log('click label');
+                    $this.trigger('click');
+                    $button.trigger('rock_change_state');
+
 
                 });
 
@@ -190,16 +198,35 @@
                     function (e) {
 
                         e.preventDefault();
-                        e.stopImmediatePropagation();
-
-
+                        e.stopPropagation();
+                        console.log('click button');
+                        $this.trigger('click');
                         $button.trigger('rock_change_state');
-                        $this.trigger('change');
-                    }).bind('rock_change_state', function () {
 
-                        $this.attr('checked',true);
-                        setButton($button, name);
+                    }).bind('rock_change_state', function () {
+                        console.log('rock_change_state');
                         settings.onChange.call($this);
+                        if($this.is('[type="checkbox"]:checked')){
+
+
+                            setButton($button, name);
+
+
+                        }
+                        else if($this.is(':checked')){
+
+                            setButton($button, name);
+                        }
+
+                        else {
+
+                            unsetButton($button);
+
+
+
+                        }
+
+
 
 
                     });

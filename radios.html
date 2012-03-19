@@ -14,24 +14,26 @@
             font-size: 14px;
         }
 
-        .rockradio {
+        .rockradio,.rockcheck {
             background: #f09;
             height: 120px;
             width: 120px;
             display: block;
+
         }
 
         .checked {
             background: yellow;
         }
 
-        .rockradio span {
+        .rockradio span,.rockcheck span {
             border: 1px solid #000;
         }
         div {
             float:left;
             width:200px;
             height:100px;
+            margin-bottom: 60px;
         }
 
     </style>
@@ -46,7 +48,7 @@
                 unchecked:'o',
 
                 onChange:function () {
-                    alert($('input[name="food"]:checked').val());
+                    console.log($("#bmw").is(':checked'));
                 }
             });
             // fuoc, eat this!
@@ -66,5 +68,11 @@
 <div><input id="hamburger" type="radio" name="food" value="hamburger"/><label for="hamburger">label outside</label></div>
 <div><label for="fries"><input id="fries" type="radio" name="food" value="fries"/></label></div>
 <div><label for="icecream"><input id="icecream" type="radio" name="food" value="icecream"/></label></div>
+
+
+<div><input id="vw" type="checkbox" name="vw" value="car"/><label for="vw">label outside</label></div>
+<div><label for="golf"><input id="golf" type="checkbox" value="golf"/></label></div>
+<div><label for="bmw"><input id="bmw" type="checkbox" name="car" value="bmw"/></label></div>
+
 </body>
 </html>
