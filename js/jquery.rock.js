@@ -20,6 +20,7 @@
             buttonClassRadio:'rockradio',
             checked:'✓',
             unchecked:'✗',
+            iconElement:'',
             replaceChars:{
                 '(':'<span>',
                 ')':'</span>'
@@ -31,37 +32,48 @@
             // big stack for all rockjs <ul>
             rocks = [],
             buttons = {},
-            // private methods
 
 
-            unsetButton = function($button){
-                            $button.removeClass(settings.checkedClass);
-                            changeHandleTextAndAria($button,settings.unchecked);
-                        },
+
+            unsetButton = function ($button) {
+                $button.removeClass(settings.checkedClass);
+                changeHandleTextAndAria($button, settings.unchecked);
+            },
 
             setButton = function ($button, name) {
-                if(typeof name !== "undefined"){
-                   $.each(buttons[name],function(){
-                                unsetButton(this);
+                var lastTwoCharacters;
 
-                   });
+                /* why */
+                if (typeof name !== "undefined") {
+                    lastTwoCharacters = name.substr(name.length - 2);
+                    if (lastTwoCharacters!=='[]') {
+                        $.each(buttons[name], function () {
+                            unsetButton(this);
+
+                        });
+                    }
+
+
+
                 }
 
                 $button.addClass(settings.checkedClass);
-                changeHandleTextAndAria($button,settings.checked);
+                changeHandleTextAndAria($button, settings.checked);
 
             },
 
 
-            changeHandleTextAndAria = function ($element, html) {
-                var text = $(html).text();
-                $element.attr('aria-valuetext', text);
-                if (settings.buttonMarkup !== '') {
-                    // find the deepest element
-                    $element.find('*:not(:has("*"))').html(html);
-                } else {
-                    $element.html(html);
-                }
+            changeHandleTextAndAria = function ($element, text) {
+
+
+                $element.text(text);
+
+                /*if (settings.buttonMarkup !== '') {
+                 // find the deepest element
+                 $element.find('*:not(:has("*"))').html(html);
+                 } else {
+                 $element.text(text);
+                 }*/
             },
             parseText = function (text) {
                 $.each(settings.replaceChars, function (index, value) {
@@ -73,11 +85,19 @@
                 return text;
             },
             buildLi = function ($element) {
-                var text = $element.text();
+                var text = '';
+                text += settings.iconElement + $element.text();
+
                 if (settings.replace) {
                     text = parseText(text);
                 }
-                return '<li role="option" data-value="' + $element.attr('value') + '" class="' + settings.optionClass + '"><button type="button">' + text + '</button></li>';
+                return '<li role="option" data-value="'
+                    + $element.attr('value') + '" class="'
+                    + settings.optionClass + '">'
+                    + '<button type="button">'
+
+                    + text
+                    + '</button></li>';
             },
             removeActive = function ($el) {
                 $el.find('.' + settings.activeClass).removeClass(settings.activeClass);
@@ -158,7 +178,7 @@
                     'type':'button'
                 }).text(settings.unchecked).wrapInner($(settings.buttonMarkup));
 
-
+                $button.addClass($this.attr('class'));
 
                 if (typeof name !== "undefined") {
                     if (!buttons.hasOwnProperty(name)) {
@@ -168,26 +188,23 @@
                 }
 
                 if ($this.is(':checked')) {
-                                    setButton($button, name);
-                                }
+                    setButton($button, name);
+                }
 
 
                 $this.hide();
 
 
-
-                $this.bind('click',function(e){
+                $this.bind('click', function (e) {
                     e.stopPropagation();
 
 
                 });
 
 
-
                 // just for ie6 to ie8
                 $('label[for="' + id + '"]').bind('click', function (e) {
                     e.preventDefault();
-                    console.log('click label');
                     $this.trigger('click');
                     $button.trigger('rock_change_state');
 
@@ -199,21 +216,19 @@
 
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('click button');
                         $this.trigger('click');
                         $button.trigger('rock_change_state');
 
                     }).bind('rock_change_state', function () {
-                        console.log('rock_change_state');
                         settings.onChange.call($this);
-                        if($this.is('[type="checkbox"]:checked')){
+                        if ($this.is('[type="checkbox"]:checked')) {
 
 
                             setButton($button, name);
 
 
                         }
-                        else if($this.is(':checked')){
+                        else if ($this.is(':checked')) {
 
                             setButton($button, name);
                         }
@@ -223,10 +238,7 @@
                             unsetButton($button);
 
 
-
                         }
-
-
 
 
                     });
@@ -238,20 +250,36 @@
                 return false;
             } else if ($this.is('select')) {
                 $this.hide();
+
                 var rock = {
                     buttons:[],
-                    $handle:null
+                    $handle:null,
+                    multiple:false
                 },
                     enter = '',
                     // array for html result
                     html = [],
+
                     $ul = $('<ul/>', {
                         'class':'rockdown'
                     }).addClass($this.attr('class')).attr({
                             'for':$this.attr('name')
                         });
+
+                if ($this.attr('multiple') === 'multiple') {
+
+                    rock.multiple = true;
+                    rock.handleText = $this.attr('title');
+
+
+                }
+                else {
+                    rock.handleText = $this.find('option:selected').text();
+                }
+
                 // save the text for more performance
-                rock.handleText = $this.find('option:selected').html();
+
+
                 // build html
                 html.push('<li><button  type="button" class="handle ' + settings.handleClass + '" aria-valuetext="' + rock.handleText + '">' + rock.handleText + '</button>');
                 html.push('<ul class="' + settings.optionsClass + '">');
@@ -287,19 +315,39 @@
                     // click on a button
                     .delegate('li.option button', 'mousedown.rock',
                     function (e) {
-                        var $target = $(this);
-                        // remove the active class from old element
-                        removeActive(rock.$element);
+                        var $target, val;
+                        $target = $(this);
+
+
+                        e.preventDefault();
+                        e.stopPropagation();
+
+
+                        if (rock.multiple) {
+
+                            if ($target.hasClass(settings.checkedClass)) {
+
+                                $target.removeClass(settings.checkedClass);
+                                $this.find('[value="' + $target.parent().attr('data-value') + '"]').attr('selected', false);
+                            }
+                            else {
+                                $target.addClass(settings.checkedClass);
+                                $this.find('[value="' + $target.parent().attr('data-value') + '"]').attr('selected', true);
+
+                            }
+                            settings.onChange.call($this);
+
+                            return false;
+                        }
+                        changeHandleTextAndAria(rock.$handle, $target.text());
                         $target.addClass(settings.activeClass);
-                        // set value, set <select> value
+                        removeActive(rock.$element);
                         $this.val($target.parent().attr('data-value'));
-                        changeHandleTextAndAria(rock.$handle, $target.html());
-                        // close it
                         close(rock);
                         // fire callback
                         settings.onChange.call($this);
                     }).delegate('li.option button', 'mouseup.rock', function () {
-                        $(this).trigger('mousedown');
+                        //$(this).trigger('mousedown');
                     })
                     // search, navigate on key event on a button or the handler
                     .delegate('li.option button,button.handle', 'keydown.rock',

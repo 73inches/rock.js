@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=320"/>
+    <title>Rock.js | Rockdown</title>
+    <link rel="stylesheet" href="css/rock.css" type="text/css">
+    <link rel="stylesheet" href="css/rocktheme/style.css" type="text/css">
+    <style type="text/css">
+        body {
+            background: #f4f3ef;
+            margin: 50px 0 0 50px;
+            font-family: "Trebuchet MS", Helvetica, Verdana, sans-serif;
+            font-size: 14px;
+        }
+
+        .rockradio,.rockcheck {
+            background: #f09;
+            height: 120px;
+            width: 120px;
+            display: block;
+
+        }
+
+        .checked {
+            background: yellow;
+        }
+
+        .rockradio span,.rockcheck span {
+            border: 1px solid #000;
+        }
+        div {
+            float:left;
+            width:200px;
+            height:100px;
+            margin-bottom: 60px;
+        }
+
+    </style>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery.rock.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function ($) {
+            $('select,input').rocks({
+
+                iconElement:'<i></i>',
+
+                onChange:function () {
+                    console.log($('select').val());
+                }
+            });
+            // fuoc, eat this!
+            document.getElementsByTagName('body')[0].style.visibility = '';
+        });
+
+    </script>
+</head>
+<body>
+<script>document.getElementsByTagName('body')[0].style.visibility = 'hidden';</script>
+<h1>Rock.js</h1>
+
+<select multiple="multiple">
+    <option value="xxx">bla bla</option>
+    <option value="ch">ch</option>
+    <option value="oO">ding ding ding </option>
+    <option value="12">123 123 123 123</option>
+</select>
+
+</body>
+</html>
