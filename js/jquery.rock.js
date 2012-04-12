@@ -214,22 +214,27 @@
                     else if ($this.is('input[type="radio"]')) {
                         unsetAllButtons(name);
                         $this.attr('checked', true);
+                        $this.trigger('change');
                         $button.trigger('rock_check');
                     }
 
                     else if ($this.is('input[type="checkbox"]:checked')) {
                         $this.attr('checked', false);
+                        $this.trigger('change');
                         $button.trigger('rock_uncheck');
                     }
 
                     else if ($this.is('input[type="checkbox"]')) {
                         $this.attr('checked', true);
+                        $this.trigger('change');
                         $button.trigger('rock_check');
                     }
 
 
 
-                });
+                }).bind('change',function(e){
+                        e.stopPropagation();
+                    });
 
 
                 // just for ie6 to ie8
