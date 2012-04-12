@@ -34,30 +34,34 @@
             buttons = {},
 
 
-
             unsetButton = function ($button) {
+
                 $button.removeClass(settings.checkedClass);
                 changeHandleTextAndAria($button, settings.unchecked);
             },
 
-            setButton = function ($button, name) {
-                var lastTwoCharacters;
 
-                /* why */
+            unsetAllButtons = function (name) {
+
                 if (typeof name !== "undefined") {
-                    lastTwoCharacters = name.substr(name.length - 2);
-                    if (lastTwoCharacters!=='[]') {
-                        $.each(buttons[name], function () {
-                            unsetButton(this);
 
-                        });
-                    }
 
+                    $.each(buttons[name], function () {
+                        unsetButton(this[0]);
+                        this[1].attr('checked', false);
+
+                    });
 
 
                 }
+            },
 
+            setButton = function ($button) {
+
+                // button anmachen
                 $button.addClass(settings.checkedClass);
+                // beschriftung
+
                 changeHandleTextAndAria($button, settings.checked);
 
             },
@@ -154,6 +158,15 @@
             }
             var $this = $(this);
 
+            if ($this.data('rocked')) {
+                //console.log($this);
+                //console.log('already rocked');
+                return jQuery;
+            }
+            else {
+                // save it to prevend to rock it twice
+                $this.data('rocked', true);
+            }
 
             if ($this.is('input[type=checkbox]') || $this.is('input[type=radio]')) {
 
@@ -184,11 +197,8 @@
                     if (!buttons.hasOwnProperty(name)) {
                         buttons[name] = [];
                     }
-                    buttons[name].push($button);
-                }
-
-                if ($this.is(':checked')) {
-                    setButton($button, name);
+                    // couple
+                    buttons[name].push([$button, $this]);
                 }
 
 
@@ -197,6 +207,26 @@
 
                 $this.bind('click', function (e) {
                     e.stopPropagation();
+                    e.preventDefault();
+                    if ($this.is('input[type="radio"]:checked')) {
+                    }
+
+                    else if ($this.is('input[type="radio"]')) {
+                        unsetAllButtons(name);
+                        $this.attr('checked', true);
+                        $button.trigger('rock_check');
+                    }
+
+                    else if ($this.is('input[type="checkbox"]:checked')) {
+                        $this.attr('checked', false);
+                        $button.trigger('rock_uncheck');
+                    }
+
+                    else if ($this.is('input[type="checkbox"]')) {
+                        $this.attr('checked', true);
+                        $button.trigger('rock_check');
+                    }
+
 
 
                 });
@@ -206,8 +236,6 @@
                 $('label[for="' + id + '"]').bind('click', function (e) {
                     e.preventDefault();
                     $this.trigger('click');
-                    $button.trigger('rock_change_state');
-
 
                 });
 
@@ -216,39 +244,37 @@
 
                         e.preventDefault();
                         e.stopPropagation();
+
+
                         $this.trigger('click');
-                        $button.trigger('rock_change_state');
 
-                    }).bind('rock_change_state', function () {
+                    }).bind('rock_check',
+
+                    function () {
+                        setButton($button);
                         settings.onChange.call($this);
-                        if ($this.is('[type="checkbox"]:checked')) {
 
+                    }).bind('rock_uncheck',
+                    function () {
+                        unsetButton($button);
 
-                            setButton($button, name);
-
-
-                        }
-                        else if ($this.is(':checked')) {
-
-                            setButton($button, name);
-                        }
-
-                        else {
-
-                            unsetButton($button);
-
-
-                        }
-
+                        settings.onChange.call($this);
+                    }).bind('rock_init', function () {
+                        setButton($button);
+                        settings.onChange.call($this);
 
                     });
                 $this.after($button);
+
+                // initial
+                if ($this.is(':checked')) {
+                    $button.trigger('rock_init');
+                }
+
                 return (jQuery);
             }
-            if ($.data(this, 'rock')) {
-                //console.log('all ready rocked');
-                return false;
-            } else if ($this.is('select')) {
+
+            else if ($this.is('select')) {
                 $this.hide();
 
                 var rock = {
@@ -454,8 +480,7 @@
                 });
                 // push all replaced <select> to stack
                 rocks.push(rock);
-                // save it to prevend to rock it twice
-                $.data(this, 'rock', rock);
+
             }
             // it's not rockable :-(
             else {
