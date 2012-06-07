@@ -88,6 +88,16 @@
                 });
                 return text;
             },
+            fire = function (rock, $button) {
+                if (!rock.open) {
+                    $button.trigger('mousedown.rock');
+                }
+
+                else {
+                    $button.hover().focus();
+
+                }
+            },
             buildLi = function ($element) {
                 var text = '';
                 text += settings.iconElement + $element.text();
@@ -205,34 +215,34 @@
                 $this.hide();
 
 
-                $this.bind('click', function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if ($this.is('input[type="radio"]:checked')) {
-                    }
+                $this.bind('click',
+                    function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if ($this.is('input[type="radio"]:checked')) {
+                        }
 
-                    else if ($this.is('input[type="radio"]')) {
-                        unsetAllButtons(name);
-                        $this.attr('checked', true);
-                        $this.trigger('change');
-                        $button.trigger('rock_check');
-                    }
+                        else if ($this.is('input[type="radio"]')) {
+                            unsetAllButtons(name);
+                            $this.attr('checked', true);
+                            $this.trigger('change');
+                            $button.trigger('rock_check');
+                        }
 
-                    else if ($this.is('input[type="checkbox"]:checked')) {
-                        $this.attr('checked', false);
-                        $this.trigger('change');
-                        $button.trigger('rock_uncheck');
-                    }
+                        else if ($this.is('input[type="checkbox"]:checked')) {
+                            $this.attr('checked', false);
+                            $this.trigger('change');
+                            $button.trigger('rock_uncheck');
+                        }
 
-                    else if ($this.is('input[type="checkbox"]')) {
-                        $this.attr('checked', true);
-                        $this.trigger('change');
-                        $button.trigger('rock_check');
-                    }
+                        else if ($this.is('input[type="checkbox"]')) {
+                            $this.attr('checked', true);
+                            $this.trigger('change');
+                            $button.trigger('rock_check');
+                        }
 
 
-
-                }).bind('change',function(e){
+                    }).bind('change', function (e) {
                         e.stopPropagation();
                     });
 
@@ -276,7 +286,7 @@
                     $button.trigger('rock_init');
                 }
 
-                return (jQuery);
+                return jQuery;
             }
 
             else if ($this.is('select')) {
@@ -284,8 +294,7 @@
 
                 var rock = {
                     buttons:[],
-                    $handle:null,
-                    multiple:false
+                    $handle:null
                 },
                     enter = '',
                     // array for html result
@@ -298,17 +307,13 @@
                         });
 
                 if ($this.attr('multiple') === 'multiple') {
-
-                    rock.multiple = true;
-                    rock.handleText = $this.attr('title');
+                    return jQuery;
 
 
                 }
                 else {
                     rock.handleText = $this.find('option:selected').text();
                 }
-
-                // save the text for more performance
 
 
                 // build html
@@ -354,22 +359,6 @@
                         e.stopPropagation();
 
 
-                        if (rock.multiple) {
-
-                            if ($target.hasClass(settings.checkedClass)) {
-
-                                $target.removeClass(settings.checkedClass);
-                                $this.find('[value="' + $target.parent().attr('data-value') + '"]').attr('selected', false);
-                            }
-                            else {
-                                $target.addClass(settings.checkedClass);
-                                $this.find('[value="' + $target.parent().attr('data-value') + '"]').attr('selected', true);
-
-                            }
-                            settings.onChange.call($this);
-
-                            return false;
-                        }
                         changeHandleTextAndAria(rock.$handle, $target.text());
                         $target.addClass(settings.activeClass);
                         removeActive(rock.$element);
@@ -383,6 +372,7 @@
                     // search, navigate on key event on a button or the handler
                     .delegate('li.option button,button.handle', 'keydown.rock',
                     function (e) {
+                        var $button, firstCharacter;
                         if (e.which === 32 || e.which === 13) {
                             $(this).trigger('mousedown.rock');
                         }
@@ -418,22 +408,55 @@
                             });
                             var id = window.setTimeout(function () {
                                 enter = '';
+
                             }, settings.searchTimeout);
+
                             timeout.push(id);
                             enter = enter + String.fromCharCode(e.which);
-                            rock.buttons.each(function () {
-                                var $this = $(this);
-                                rock.$last = $this;
-                                if ($this.text().toLowerCase().indexOf(enter.toLowerCase()) === 0) {
-                                    if (!rock.open) {
-                                        $this.trigger('mousedown.rock');
-                                    } else {
-                                        $this.hover().focus();
+                            firstCharacter = enter.substr(0, 1);
+
+
+                            if (rock.buttons.firstCharacter !== firstCharacter) {
+
+                                rock.buttons.current = 0;
+                            }
+
+                            if ($.isArray(rock.buttons[firstCharacter])) {
+                                rock.buttons.firstCharacter = firstCharacter;
+                                if (enter.length === 1) {
+
+                                    if (rock.buttons.current === rock.buttons[firstCharacter].length - 1) {
+                                        rock.buttons.current = 0;
                                     }
-                                    return false;
+                                    $button = rock.buttons[enter][rock.buttons.current];
+                                    rock.buttons.current++;
+
+
                                 }
-                                // else nothing found
-                            });
+                                else {
+
+                                    $.each(rock.buttons[firstCharacter], function (index, element) {
+                                        var $element = $(element);
+
+
+                                        if ($element.text().toLowerCase().indexOf(enter.toLowerCase()) === 0) {
+                                            $button = $element;
+                                            return false;
+
+
+                                        }
+
+
+                                    });
+                                }
+                                if ($button) {
+                                    fire(rock, $button);
+                                }
+
+
+                            }
+
+
                         }
                     }).delegate('ul li.' + settings.optionClass, 'mouseover', function () {
                         $(this).find('button').focus();
@@ -472,8 +495,21 @@
                 // add custom markup
                 rock.$handle.wrapInner($(settings.buttonMarkup));
                 // save all buttons in array
-                rock.buttons = $ul.find('li.' + settings.optionClass + ' button');
+
                 // inject the <ul class="rockdown"> in the dom, after the hidden <select>
+
+                $ul.find('li.' + settings.optionClass + ' button').each(function () {
+                    var firstCharacter = $(this).text().substr(0, 1);
+                    if (!$.isArray(rock.buttons[firstCharacter])) {
+                        rock.buttons[firstCharacter] = [];
+                    }
+
+                    rock.buttons[firstCharacter].push($(this));
+                });
+                rock.buttons['current'] = 0;
+                rock.buttons['firstCharachter'] = '';
+
+
                 $this.after($ul);
                 // nice to have: do it bidirectional
                 $this.bind('change', function () {
