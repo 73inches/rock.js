@@ -513,9 +513,9 @@
                 $this.after($ul);
                 // nice to have: do it bidirectional
                 $this.bind('change', function () {
-                    var $this = $(this);
-                    var value = $this.val();
-                    var text = $this.find('option[value=' + value + ']').first().html();
+                    var $this = $(this),
+                        value = $this.val(),
+                        text = $this.find('option[value=' + value + ']').first().html();
                     changeHandleTextAndAria(rock.$handle, text);
                     $ul.find('.' + settings.activeClass).removeClass(settings.activeClass).find('ul li[data-value=' + value + '] button').addClass(settings.activeClass);
                 });
