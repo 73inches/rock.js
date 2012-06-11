@@ -2,7 +2,6 @@
 (function ($) {
     "use strict";
     $.fn.rocks = function (options) {
-
         var settings = {
             optionClass:'option',
             optionsClass:'options',
@@ -11,7 +10,7 @@
             openClass:'open',
             mobileClass:'rjsmo',
             mobileClassWP7:'rjswp7',
-            searchTimeout:1000,
+            searchTimeout:700,
             handleClass:'',
             buttonMarkup:'',
             replace:false,
@@ -32,46 +31,27 @@
             // big stack for all rockjs <ul>
             rocks = [],
             buttons = {},
-
-
-            unsetButton = function ($button) {
-
-                $button.removeClass(settings.checkedClass);
-                changeHandleTextAndAria($button, settings.unchecked);
-            },
-
-
+            enter = '',
+            timeout, unsetButton = function ($button) {
+            $button.removeClass(settings.checkedClass);
+            changeHandleTextAndAria($button, settings.unchecked);
+        },
             unsetAllButtons = function (name) {
-
                 if (typeof name !== "undefined") {
-
-
                     $.each(buttons[name], function () {
                         unsetButton(this[0]);
                         this[1].attr('checked', false);
-
                     });
-
-
                 }
             },
-
             setButton = function ($button) {
-
                 // button anmachen
                 $button.addClass(settings.checkedClass);
                 // beschriftung
-
                 changeHandleTextAndAria($button, settings.checked);
-
             },
-
-
             changeHandleTextAndAria = function ($element, text) {
-
-
                 $element.text(text);
-
                 /*if (settings.buttonMarkup !== '') {
                  // find the deepest element
                  $element.find('*:not(:has("*"))').html(html);
@@ -88,30 +68,13 @@
                 });
                 return text;
             },
-            fire = function (rock, $button) {
-                if (!rock.open) {
-                    $button.trigger('mousedown.rock');
-                }
-
-                else {
-                    $button.hover().focus();
-
-                }
-            },
             buildLi = function ($element) {
                 var text = '';
                 text += settings.iconElement + $element.text();
-
                 if (settings.replace) {
                     text = parseText(text);
                 }
-                return '<li role="option" data-value="'
-                    + $element.attr('value') + '" class="'
-                    + settings.optionClass + '">'
-                    + '<button type="button">'
-
-                    + text
-                    + '</button></li>';
+                return '<li role="option" data-value="' + $element.attr('value') + '" class="' + settings.optionClass + '">' + '<button type="button">' + text + '</button></li>';
             },
             removeActive = function ($el) {
                 $el.find('.' + settings.activeClass).removeClass(settings.activeClass);
@@ -120,6 +83,7 @@
             close = function (rock) {
                 rock.$element.removeClass(settings.openClass);
                 rock.open = false;
+                //rock.$handle.focus();
                 $(window.document).unbind('click.rock').unbind('keyup.rock');
             },
             // close all and open the clicked one
@@ -148,14 +112,58 @@
                         }
                     }
                 });
+            },
+            search = function (rock, character) {
+                var firstCharacter, found = false;
+                enter = enter + character;
+
+                firstCharacter = enter.substr(0, 1);
+                if (enter.length === 1) {
+                    rock.buttons.lastCharacter = firstCharacter;
+                }
+                if ($.isArray(rock.buttons.sameCharacter[firstCharacter])) {
+                    // mehrere Buchstaben
+                    $.each(rock.buttons.sameCharacter[firstCharacter], function (index, element) {
+                        if ($(element[1]).text().toLowerCase().indexOf(enter.toLowerCase()) === 0) {
+                            rock.buttons.sameCharacter.pos = 0;
+                            rock.buttons.current = element[1];
+                            rock.buttons.all_buttons.pos = element[0];
+                            rock.$element.trigger('update');
+                            rock.$element.trigger('set');
+                            found = true;
+                            return false;
+                        }
+                        //kein Treffer via Volltext!
+                        //rock.buttons.lastCharacter = character;
+                    });
+                    if (found) {
+                        return;
+                    }
+                    if (rock.buttons.lastCharacter === character) {
+
+                        if (rock.buttons.sameCharacter.pos > rock.buttons.sameCharacter[firstCharacter].length - 1) {
+                            rock.buttons.sameCharacter.pos = 0;
+                        }
+                        rock.buttons.sameCharacter.pos++;
+                        rock.buttons.current = rock.buttons.sameCharacter[character][rock.buttons.sameCharacter.pos][1];
+                        rock.$element.trigger('update');
+                        rock.$element.trigger('set');
+                        rock.buttons.all_buttons.pos = rock.buttons.sameCharacter[character][rock.buttons.sameCharacter.pos][0];
+
+                        rock.buttons.lastCharacter = character;
+                    } else {
+                        enter = '';
+                        search(rock, character);
+                    }
+                } else {
+                    enter = '';
+                }
             };
         if (options) {
             $.extend(settings, options);
         }
-
         // the magic starts here
         return this.each(function () {
-
             // if iphone, android or windows phone 7, don't replace select
             userAgent = window.navigator.userAgent.toLowerCase();
             if (userAgent.match(/(iphone|android|xblwp7|IEMobile)/)) {
@@ -167,42 +175,29 @@
                 return false;
             }
             var $this = $(this);
-
             if ($this.data('rocked')) {
                 //console.log($this);
                 //console.log('already rocked');
                 return jQuery;
-            }
-            else {
+            } else {
                 // save it to prevend to rock it twice
                 $this.data('rocked', true);
             }
-
             if ($this.is('input[type=checkbox]') || $this.is('input[type=radio]')) {
-
-                var $button,
-                    id,
-                    name,
-                    classname;
-
+                var $button, id, name, classname;
                 id = $this.attr('id');
                 name = $this.attr('name');
                 classname = settings.buttonClassCheckbox;
-
                 if ($this.is('[type="radio"]')) {
                     classname = settings.buttonClassRadio;
                 } else {
                     classname = settings.buttonClassCheckbox;
                 }
-
-
                 $button = $('<button/>', {
                     'class':classname,
                     'type':'button'
                 }).text(settings.unchecked).wrapInner($(settings.buttonMarkup));
-
                 $button.addClass($this.attr('class'));
-
                 if (typeof name !== "undefined") {
                     if (!buttons.hasOwnProperty(name)) {
                         buttons[name] = [];
@@ -210,112 +205,79 @@
                     // couple
                     buttons[name].push([$button, $this]);
                 }
-
-
                 $this.hide();
-
-
                 $this.bind('click',
                     function (e) {
                         e.stopPropagation();
                         e.preventDefault();
                         if ($this.is('input[type="radio"]:checked')) {
-                        }
-
-                        else if ($this.is('input[type="radio"]')) {
+                        } else if ($this.is('input[type="radio"]')) {
                             unsetAllButtons(name);
                             $this.attr('checked', true);
                             $this.trigger('change');
                             $button.trigger('rock_check');
-                        }
-
-                        else if ($this.is('input[type="checkbox"]:checked')) {
+                        } else if ($this.is('input[type="checkbox"]:checked')) {
                             $this.attr('checked', false);
                             $this.trigger('change');
                             $button.trigger('rock_uncheck');
-                        }
-
-                        else if ($this.is('input[type="checkbox"]')) {
+                        } else if ($this.is('input[type="checkbox"]')) {
                             $this.attr('checked', true);
                             $this.trigger('change');
                             $button.trigger('rock_check');
                         }
-
-
                     }).bind('change', function (e) {
                         e.stopPropagation();
                     });
-
-
                 // just for ie6 to ie8
                 $('label[for="' + id + '"]').bind('click', function (e) {
                     e.preventDefault();
                     $this.trigger('click');
-
                 });
-
                 $button.bind('click.rock',
                     function (e) {
-
                         e.preventDefault();
                         e.stopPropagation();
-
-
                         $this.trigger('click');
-
                     }).bind('rock_check',
-
                     function () {
                         setButton($button);
                         settings.onChange.call($this);
-
                     }).bind('rock_uncheck',
                     function () {
                         unsetButton($button);
-
                         settings.onChange.call($this);
                     }).bind('rock_init', function () {
                         setButton($button);
                         settings.onChange.call($this);
-
                     });
                 $this.after($button);
-
                 // initial
                 if ($this.is(':checked')) {
                     $button.trigger('rock_init');
                 }
-
                 return jQuery;
-            }
-
-            else if ($this.is('select')) {
+            } else if ($this.is('select')) {
                 $this.hide();
-
                 var rock = {
-                    buttons:[],
+                    buttons:{
+                        all_buttons:[],
+                        sameCharacter:[]
+                    },
                     $handle:null
                 },
                     enter = '',
                     // array for html result
                     html = [],
-
                     $ul = $('<ul/>', {
                         'class':'rockdown'
                     }).addClass($this.attr('class')).attr({
                             'for':$this.attr('name')
                         });
-
                 if ($this.attr('multiple') === 'multiple') {
                     return jQuery;
-
-
-                }
-                else {
+                } else {
                     rock.handleText = $this.find('option:selected').text();
                 }
-
-
                 // build html
                 html.push('<li><button  type="button" class="handle ' + settings.handleClass + '" aria-valuetext="' + rock.handleText + '">' + rock.handleText + '</button>');
                 html.push('<ul class="' + settings.optionsClass + '">');
@@ -349,117 +311,91 @@
                 // a lot of event delegation for the ul
                 rock.$element = $ul
                     // click on a button
-                    .delegate('li.option button', 'mousedown.rock',
+                    .bind('update',
+                    function () {
+                        var $target = $(rock.buttons.current);
+                        changeHandleTextAndAria(rock.$handle, $target.text());
+                        rock.$element.find('.hover').removeClass('hover');
+                        $target.addClass('hover');
+                    }).bind('set',
+                    function () {
+                        var val, $target = $(rock.buttons.current);
+                        removeActive(rock.$element);
+                        rock.$element.find('.hover').removeClass('hover');
+                        $target.addClass('hover');
+                        $target.addClass(settings.activeClass);
+                        changeHandleTextAndAria(rock.$handle, $target.text());
+                        $this.val($target.parent().attr('data-value'));
+                        // fire callback
+                        settings.onChange.call($this);
+                    }).delegate('li.option button', 'mousedown.rock',
                     function (e) {
-                        var $target, val;
-                        $target = $(this);
 
+                        rock.buttons.lastCharacter = '';
+                        rock.buttons.current = e.target;
+                        rock.buttons.all_buttons.pos = $.inArray(e.target, rock.buttons.all_buttons);
 
                         e.preventDefault();
                         e.stopPropagation();
-
-
-                        changeHandleTextAndAria(rock.$handle, $target.text());
-                        $target.addClass(settings.activeClass);
-                        removeActive(rock.$element);
-                        $this.val($target.parent().attr('data-value'));
                         close(rock);
-                        // fire callback
-                        settings.onChange.call($this);
-                    }).delegate('li.option button', 'mouseup.rock', function () {
-                        //$(this).trigger('mousedown');
+                        rock.$element.trigger('update');
+                        rock.$element.trigger('set');
+                    }).delegate('li.option button', 'mouseup.rock', function (e) {
+                        e.preventDefault();
+                        $(this).trigger('mousedown');
                     })
                     // search, navigate on key event on a button or the handler
-                    .delegate('li.option button,button.handle', 'keydown.rock',
+                    .bind('keydown.rock',
                     function (e) {
-                        var $button, firstCharacter;
-                        if (e.which === 32 || e.which === 13) {
-                            $(this).trigger('mousedown.rock');
+                        var character;
+                        window.clearTimeout(timeout);
+                        timeout = window.setTimeout(
+
+                            function () {
+
+                                enter = '';
+                            }, settings.searchTimeout); // will work with every browser
+
+                        // enter oder space bar
+                        if (e.which === 13 || e.which === 32) {
+                            if (rock.open) {
+                                $(e.target).trigger('mousedown');
+                            }
                         }
                         if (e.which === 40 || e.which === 38) {
-                            enter = '';
                             e.preventDefault();
-                            e.stopPropagation();
-                            // find the clicked button in the array, not in the DOM
-                            rock.buttons.each(function (index, value) {
-                                // button found
-                                if (e.target === value) {
-                                    // arrow down ⇩
-                                    if (e.which === 40) {
-                                        // just be sure, there is a next button
-                                        if (index + 1 < rock.buttons.length) {
-                                            // go to next element and focus it, for ie6 we should add a hover class
-                                            rock.buttons.get(index + 1).focus();
-                                        }
-                                    }
-                                    if (e.which === 38) {
-                                        // arrow up ↑
-                                        // if we are on the first element, just do nothing
-                                        if (index > 0) {
-                                            rock.buttons.get(index - 1).focus();
-                                        }
-                                    }
+                            rock.buttons.lastCharacter = '';
+                            // arrow down ⇩
+                            if (e.which === 40) {
+                                // just be sure, there is a next button
+                                if (rock.buttons.all_buttons.pos + 1 < rock.buttons.all_buttons.length) {
+                                    rock.buttons.all_buttons.pos++;
+                                    rock.buttons.current = rock.buttons.all_buttons[rock.buttons.all_buttons.pos];
+                                    rock.$element.trigger('update');
+                                    rock.$element.trigger('set');
                                 }
-                            });
-                        } else {
-                            //clear all timeouts
-                            $.each(timeout, function () {
-                                window.clearTimeout(this);
-                            });
-                            var id = window.setTimeout(function () {
-                                enter = '';
-
-                            }, settings.searchTimeout);
-
-                            timeout.push(id);
-                            enter = enter + String.fromCharCode(e.which);
-                            firstCharacter = enter.substr(0, 1);
-
-
-                            if (rock.buttons.firstCharacter !== firstCharacter) {
-
-                                rock.buttons.current = 0;
+                                return;
                             }
-
-                            if ($.isArray(rock.buttons[firstCharacter])) {
-                                rock.buttons.firstCharacter = firstCharacter;
-                                if (enter.length === 1) {
-
-                                    if (rock.buttons.current === rock.buttons[firstCharacter].length - 1) {
-                                        rock.buttons.current = 0;
-                                    }
-                                    $button = rock.buttons[enter][rock.buttons.current];
-                                    rock.buttons.current++;
-
-
+                            if (e.which === 38) {
+                                // arrow up ↑
+                                // if we are on the first element, just do nothing
+                                if (rock.buttons.all_buttons.pos > 0) {
+                                    rock.buttons.all_buttons.pos--;
+                                    rock.buttons.current = rock.buttons.all_buttons[rock.buttons.all_buttons.pos];
+                                    rock.$element.trigger('update');
+                                    rock.$element.trigger('set');
                                 }
-                                else {
-
-                                    $.each(rock.buttons[firstCharacter], function (index, element) {
-                                        var $element = $(element);
-
-
-                                        if ($element.text().toLowerCase().indexOf(enter.toLowerCase()) === 0) {
-                                            $button = $element;
-                                            return false;
-
-
-                                        }
-
-
-                                    });
-                                }
-                                if ($button) {
-                                    fire(rock, $button);
-                                }
-
-
                             }
-
-
                         }
-                    }).delegate('ul li.' + settings.optionClass, 'mouseover', function () {
-                        $(this).find('button').focus();
+                        // textsuche
+                        else {
+                            character = String.fromCharCode(e.which);
+                            search(rock, character);
+                        }
+                    }).delegate('.' + settings.optionClass + ' button', 'mouseover', function (e) {
+                        rock.buttons.current = e.target;
+                        rock.buttons.all_buttons.pos = $.inArray(rock.buttons.current, rock.buttons.all_buttons);
+                        rock.$element.trigger('update');
                     })
                     // events on the handle
                     .delegate('button.handle', 'mousedown.rock',
@@ -473,21 +409,9 @@
                             // please open it
                             open(rock);
                         }
-                    }).delegate('button.handle', 'mouseup.rock',
-                    function (e) {
+                    }).delegate('button.handle', 'mouseup.rock', function (e) {
                         $(this).trigger('click');
                         e.preventDefault();
-                    }).delegate('button.handle', 'keyup.rock', function (e) {
-                        // arrow down
-                        if (e.which === 40 || e.which === 32) {
-                            // open it
-                            if (!rock.open) {
-                                open(rock);
-                            } else {
-                                // if it's open, go to first element
-                                rock.$element.find('li.option:first button').focus();
-                            }
-                        }
                     });
                 // inject a lot of html to the <ul class="rockdown">
                 $ul.append(html.join(""));
@@ -497,19 +421,19 @@
                 // save all buttons in array
 
                 // inject the <ul class="rockdown"> in the dom, after the hidden <select>
-
-                $ul.find('li.' + settings.optionClass + ' button').each(function () {
-                    var firstCharacter = $(this).text().substr(0, 1);
-                    if (!$.isArray(rock.buttons[firstCharacter])) {
-                        rock.buttons[firstCharacter] = [];
+                $ul.find('li.' + settings.optionClass + ' button').each(function (index, element) {
+                    rock.buttons.all_buttons[index] = element;
+                    var sameCharacter, firstCharacter = $(element).text().substr(0, 1);
+                    if (!$.isArray(rock.buttons.sameCharacter[firstCharacter])) {
+                        rock.buttons.sameCharacter[firstCharacter] = [];
                     }
-
-                    rock.buttons[firstCharacter].push($(this));
+                    sameCharacter = [index, element];
+                    rock.buttons.sameCharacter[firstCharacter].push(sameCharacter);
                 });
-                rock.buttons['current'] = 0;
-                rock.buttons['firstCharachter'] = '';
-
-
+                rock.buttons.sameCharacter.pos = 0;
+                rock.buttons.current = rock.buttons.all_buttons[0];
+                rock.buttons.all_buttons.pos = 0;
+                rock.buttons['lastCharachter'] = '';
                 $this.after($ul);
                 // nice to have: do it bidirectional
                 $this.bind('change', function () {
@@ -521,7 +445,6 @@
                 });
                 // push all replaced <select> to stack
                 rocks.push(rock);
-
             }
             // it's not rockable :-(
             else {
