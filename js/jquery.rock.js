@@ -25,9 +25,10 @@
                 ')':'</span>'
             },
             onChange:function () {
+
             }
         },
-            userAgent, timeout = [],
+            userAgent,
             // big stack for all rockjs <ul>
             rocks = [],
             buttons = {},
@@ -44,12 +45,7 @@
                     });
                 }
             },
-            setButton = function ($button) {
-                // button anmachen
-                $button.addClass(settings.checkedClass);
-                // beschriftung
-                changeHandleTextAndAria($button, settings.checked);
-            },
+
             changeHandleTextAndAria = function ($element, text) {
                 $element.text(text);
                 /*if (settings.buttonMarkup !== '') {
@@ -59,6 +55,12 @@
                  $element.text(text);
                  }*/
             },
+            setButton = function ($button) {
+                            // button anmachen
+                            $button.addClass(settings.checkedClass);
+                            // beschriftung
+                            changeHandleTextAndAria($button, settings.checked);
+                        },
             parseText = function (text) {
                 $.each(settings.replaceChars, function (index, value) {
                     var chars = text.split('');
@@ -313,13 +315,17 @@
                     // click on a button
                     .bind('update',
                     function () {
+
                         var $target = $(rock.buttons.current);
                         changeHandleTextAndAria(rock.$handle, $target.text());
                         rock.$element.find('.hover').removeClass('hover');
                         $target.addClass('hover');
-                    }).bind('set',
+                    })
+
+                    .bind('set',
                     function () {
                         var val, $target = $(rock.buttons.current);
+
                         removeActive(rock.$element);
                         rock.$element.find('.hover').removeClass('hover');
                         $target.addClass('hover');
@@ -395,7 +401,7 @@
                     }).delegate('.' + settings.optionClass + ' button', 'mouseover', function (e) {
                         rock.buttons.current = e.target;
                         rock.buttons.all_buttons.pos = $.inArray(rock.buttons.current, rock.buttons.all_buttons);
-                        rock.$element.trigger('update');
+
                     })
                     // events on the handle
                     .delegate('button.handle', 'mousedown.rock',

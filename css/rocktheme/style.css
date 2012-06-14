@@ -66,7 +66,7 @@ ul.rockdown button.handle:focus {
 	background: #c23833 url(down.png) right center no-repeat;
 }
 
-ul.rockdown ul button:focus,ul.rockdown ul button.hover {
+ul.rockdown ul button:focus,ul.rockdown ul button.hover,ul.rockdown ul button:hover {
 	background: #b22823;
 	color: #fff;
 	outline: none;
