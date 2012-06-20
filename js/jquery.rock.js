@@ -57,18 +57,17 @@
             },
             pushToArrays = function (rock, index, element) {
                 var firstCharacter,
-                    sameCharacter,
-                    $el = $(element);
+                    $element,
+                    sameCharacter;
 
+                $element = $(element);
 
+                if ($element.attr('accesskey')) {
 
-
-                if ($el.attr('accesskey')) {
-
-                    firstCharacter = $el.attr('accesskey');
+                    firstCharacter = $element.attr('accesskey');
                 }
                 else {
-                    firstCharacter = $el.text().substr(0, 1);
+                    firstCharacter = $element.text().substr(0, 1);
                 }
                 if (!rock.buttons.sameCharacter[firstCharacter]) {
                     rock.buttons.sameCharacter[firstCharacter] = [];
@@ -95,12 +94,26 @@
                 return text;
             },
             buildLi = function ($element) {
-                var text = '';
+                var text = '',
+                    accesskey = '',
+                data_value =' data-value="' + $element.attr('value')+'" ';
                 text += settings.iconElement + $element.text();
                 if (settings.replace) {
                     text = parseText(text);
                 }
-                return '<li role="option" data-value="' + $element.attr('value') + '" class="' + settings.optionClass + '">' + '<button type="button">' + text + '</button></li>';
+
+                if($element.attr('accesskey')){
+                   accesskey = ' accesskey="'+$element.attr('accesskey')+'"';
+                }
+
+                return '<li class="' + settings.optionClass + '">' +
+                    '<button type="button"'+
+                    accesskey+
+                    data_value+
+
+                    '>' +
+                    text +
+                    '</button></li>';
             },
             removeActive = function ($el) {
                 $el.find('.' + settings.activeClass).removeClass(settings.activeClass);
@@ -163,16 +176,15 @@
                             found = true;
 
 
-
                             return false;
                         }
                         window.clearTimeout(timeout);
-                                                timeout = window.setTimeout(
+                        timeout = window.setTimeout(
 
-                                                    function () {
-                                                        console.log('reset enter');
-                                                        enter = '';
-                                                    }, settings.searchTimeout);
+                            function () {
+                                console.log('reset enter');
+                                enter = '';
+                            }, settings.searchTimeout);
                         //kein Treffer via Volltext!
                         //rock.buttons.lastCharacter = character;
                     });
@@ -354,7 +366,7 @@
                 // find all <option> and <optgroup>
                 $this.children().each(function (index, element) {
                     // <option> or <optgroup>
-                    var li,$el = $(element);
+                    var li, $el = $(element);
                     // hey, it's an <optgroup>
                     if ($el.is('optgroup')) {
                         html.push('<li class="' + settings.optClass + '"><span>' + $el.attr('label') + '</span>');
@@ -418,7 +430,8 @@
 
                         rock.buttons.lastCharacter = '';
                         rock.buttons.current = e.target;
-                        rock.buttons.pos = $.inArray(e.target, rock.buttons.all_buttons);
+                        rock.buttons.pos = $(e.target).data('index');
+
                         e.preventDefault();
                         e.stopPropagation();
                         close(rock);
@@ -497,15 +510,14 @@
                 html = html.join("");
 
 
-
-
                 // inject a lot of html to the <ul class="rockdown">
                 $ul.append(html);
 
-                $ul.find('.options button').each(function(index,element){
-                                                    pushToArrays(rock,index,element);
-                                                    rock.buttons.all_buttons.push(element);
-                                                });
+                $ul.find('.options button').each(function (index, element) {
+                    $(element).data('index',index);
+                    pushToArrays(rock, index, element);
+                    rock.buttons.all_buttons.push(element);
+                });
 
                 rock.$handle = $ul.find('button.handle');
                 // add custom markup
