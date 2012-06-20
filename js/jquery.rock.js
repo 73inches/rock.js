@@ -10,7 +10,7 @@
             openClass:'open',
             mobileClass:'rjsmo',
             mobileClassWP7:'rjswp7',
-            searchTimeout:2700,
+            searchTimeout:700,
             handleClass:'',
             buttonMarkup:'',
             replace:false,
@@ -66,7 +66,6 @@
                 if ($el.attr('accesskey')) {
 
                     firstCharacter = $el.attr('accesskey');
-                    //console.log(firstCharacter);
                 }
                 else {
                     firstCharacter = $el.text().substr(0, 1);
@@ -146,17 +145,15 @@
 
 
                 enter = enter + character;
-                console.log(character);
                 firstCharacter = enter.substr(0, 1);
                 if (enter.length === 1) {
                     rock.buttons.lastCharacter = firstCharacter;
                 }
                 if (rock.buttons.sameCharacter[firstCharacter]) {
                     // mehrere Buchstaben
-                    console.log('each');
 
                     $.each(rock.buttons.sameCharacter[firstCharacter], function (index, element) {
-                        console.log('found');
+
                         if ($(element[1]).text().toLowerCase().indexOf(enter.toLowerCase()) === 0) {
                             rock.buttons.sameCharacter.pos = 0;
                             rock.buttons.current = element[1];
@@ -164,8 +161,18 @@
                             rock.$element.trigger('update');
                             rock.$element.trigger('set');
                             found = true;
+
+
+
                             return false;
                         }
+                        window.clearTimeout(timeout);
+                                                timeout = window.setTimeout(
+
+                                                    function () {
+                                                        console.log('reset enter');
+                                                        enter = '';
+                                                    }, settings.searchTimeout);
                         //kein Treffer via Volltext!
                         //rock.buttons.lastCharacter = character;
                     });
@@ -175,7 +182,7 @@
 
                     // "walk"
                     if (rock.buttons.lastCharacter === character) {
-
+                        console.log('walk');
                         // wenn letztes Element erreicht ist
                         rock.buttons.sameCharacter.pos = rock.buttons.sameCharacter.pos + 1;
 
@@ -183,7 +190,7 @@
                             // von vorne beginnen
                             rock.buttons.sameCharacter.pos = 0;
                         }
-                        console.log(rock.buttons.sameCharacter[firstCharacter]);
+
                         // weiter
 
                         // aktuelles element setzen
@@ -193,16 +200,16 @@
 
                         // pos setzen
                         rock.buttons.pos = rock.buttons.sameCharacter[character][rock.buttons.sameCharacter.pos][0];
-                        console.log(rock.buttons.pos);
+
                         rock.buttons.lastCharacter = character;
                     } else {
-                        console.log('eles');
+
                         enter = '';
                         search(rock, character);
                     }
                 }
                 else {
-                    console.log('verdammt');
+
                     enter = '';
                 }
             };
@@ -234,7 +241,6 @@
             }
 
             if ($this.data('rocked')) {
-                //console.log($this);
                 //console.log('already rocked');
                 return jQuery;
             } else {
@@ -374,8 +380,6 @@
                     }
 
                 });
-                //console.log(rock.buttons.sameCharacter);
-                //console.log(rock.buttons.sameCharacter);
                 html.push('</ul>');
                 html.push('</li>');
                 // simulate the click on the linked label
@@ -428,13 +432,7 @@
                     .bind('keydown.rock',
                     function (e) {
                         var character;
-                        window.clearTimeout(timeout);
-                        timeout = window.setTimeout(
 
-                            function () {
-                                console.log('enter reset');
-                                enter = '';
-                            }, settings.searchTimeout);
 
                         // enter oder space bar
                         if (e.which === 13 || e.which === 32) {

@@ -32,13 +32,13 @@
 	<script type="text/javascript" src="js/jquery.rock.js"></script>
 	<script type="text/javascript">
 	    $(document).ready(function ($) {
-	        $('select[name="animals"]').rocks({
+	        $('select[name="Country"]').rocks({
                 replace:true,
         replaceChars: {
                 '*': '<span class="star">&nbsp;</span>'
             },
                 onChange:function(){
-                    console.log('val' + $(this).val());
+                    //console.log('val' + $(this).val());
                 }
             }).focus();
          // fuoc, eat this!
