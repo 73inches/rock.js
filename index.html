@@ -32,15 +32,15 @@
 	<script type="text/javascript" src="js/jquery.rock.js"></script>
 	<script type="text/javascript">
 	    $(document).ready(function ($) {
-	        $('select,input').rocks({
+	        $('select[name="animals"]').rocks({
                 replace:true,
         replaceChars: {
                 '*': '<span class="star">&nbsp;</span>'
             },
                 onChange:function(){
-                    console.log($(this).val());
+                    console.log('val' + $(this).val());
                 }
-            });
+            }).focus();
          // fuoc, eat this!
         document.getElementsByTagName('body')[0].style.visibility = '';
 
@@ -79,6 +79,15 @@
         </optgroup>
         <option value="lollipops">Red Lollipops</option>
     </select>
+
+    <select name="creditcard_month" class="no_js_hide required
+        creditcard_month"
+            id="creditcard_month">
+            <option value="">Monat</option>
+            <option accesskey="1" value="01">1</option>
+            <option accesskey="2" value="02">2</option>
+            <option accesskey="3" value="03">3</option>
+        </select>
 
     <select name="Country">
     <option value="" selected="selected">Select Country</option>

@@ -1,4 +1,4 @@
-// jquery plugin
+/* browser*/
 (function ($) {
     "use strict";
     $.fn.rocks = function (options) {
@@ -10,7 +10,7 @@
             openClass:'open',
             mobileClass:'rjsmo',
             mobileClassWP7:'rjswp7',
-            searchTimeout:700,
+            searchTimeout:2700,
             handleClass:'',
             buttonMarkup:'',
             replace:false,
@@ -28,7 +28,17 @@
 
             }
         },
+            changeHandleTextAndAria = function ($element, text) {
+                $element.text(text);
+                /*if (settings.buttonMarkup !== '') {
+                 // find the deepest element
+                 $element.find('*:not(:has("*"))').html(html);
+                 } else {
+                 $element.text(text);
+                 }*/
+            },
             userAgent,
+
             // big stack for all rockjs <ul>
             rocks = [],
             buttons = {},
@@ -45,22 +55,37 @@
                     });
                 }
             },
+            pushToArrays = function (rock, index, element) {
+                var firstCharacter,
+                    sameCharacter,
+                    $el = $(element);
 
-            changeHandleTextAndAria = function ($element, text) {
-                $element.text(text);
-                /*if (settings.buttonMarkup !== '') {
-                 // find the deepest element
-                 $element.find('*:not(:has("*"))').html(html);
-                 } else {
-                 $element.text(text);
-                 }*/
+
+
+
+                if ($el.attr('accesskey')) {
+
+                    firstCharacter = $el.attr('accesskey');
+                    //console.log(firstCharacter);
+                }
+                else {
+                    firstCharacter = $el.text().substr(0, 1);
+                }
+                if (!rock.buttons.sameCharacter[firstCharacter]) {
+                    rock.buttons.sameCharacter[firstCharacter] = [];
+                }
+                sameCharacter = [index, element];
+
+                rock.buttons.sameCharacter[firstCharacter].push(sameCharacter);
             },
+
+
             setButton = function ($button) {
-                            // button anmachen
-                            $button.addClass(settings.checkedClass);
-                            // beschriftung
-                            changeHandleTextAndAria($button, settings.checked);
-                        },
+                // button anmachen
+                $button.addClass(settings.checkedClass);
+                // beschriftung
+                changeHandleTextAndAria($button, settings.checked);
+            },
             parseText = function (text) {
                 $.each(settings.replaceChars, function (index, value) {
                     var chars = text.split('');
@@ -116,20 +141,26 @@
                 });
             },
             search = function (rock, character) {
-                var firstCharacter, found = false;
-                enter = enter + character;
+                var firstCharacter,
+                    found = false;
 
+
+                enter = enter + character;
+                console.log(character);
                 firstCharacter = enter.substr(0, 1);
                 if (enter.length === 1) {
                     rock.buttons.lastCharacter = firstCharacter;
                 }
-                if ($.isArray(rock.buttons.sameCharacter[firstCharacter])) {
+                if (rock.buttons.sameCharacter[firstCharacter]) {
                     // mehrere Buchstaben
+                    console.log('each');
+
                     $.each(rock.buttons.sameCharacter[firstCharacter], function (index, element) {
+                        console.log('found');
                         if ($(element[1]).text().toLowerCase().indexOf(enter.toLowerCase()) === 0) {
                             rock.buttons.sameCharacter.pos = 0;
                             rock.buttons.current = element[1];
-                            rock.buttons.all_buttons.pos = element[0];
+                            rock.buttons.pos = element[0];
                             rock.$element.trigger('update');
                             rock.$element.trigger('set');
                             found = true;
@@ -141,23 +172,37 @@
                     if (found) {
                         return;
                     }
+
+                    // "walk"
                     if (rock.buttons.lastCharacter === character) {
 
+                        // wenn letztes Element erreicht ist
+                        rock.buttons.sameCharacter.pos = rock.buttons.sameCharacter.pos + 1;
+
                         if (rock.buttons.sameCharacter.pos > rock.buttons.sameCharacter[firstCharacter].length - 1) {
+                            // von vorne beginnen
                             rock.buttons.sameCharacter.pos = 0;
                         }
-                        rock.buttons.sameCharacter.pos++;
+                        console.log(rock.buttons.sameCharacter[firstCharacter]);
+                        // weiter
+
+                        // aktuelles element setzen
                         rock.buttons.current = rock.buttons.sameCharacter[character][rock.buttons.sameCharacter.pos][1];
                         rock.$element.trigger('update');
                         rock.$element.trigger('set');
-                        rock.buttons.all_buttons.pos = rock.buttons.sameCharacter[character][rock.buttons.sameCharacter.pos][0];
 
+                        // pos setzen
+                        rock.buttons.pos = rock.buttons.sameCharacter[character][rock.buttons.sameCharacter.pos][0];
+                        console.log(rock.buttons.pos);
                         rock.buttons.lastCharacter = character;
                     } else {
+                        console.log('eles');
                         enter = '';
                         search(rock, character);
                     }
-                } else {
+                }
+                else {
+                    console.log('verdammt');
                     enter = '';
                 }
             };
@@ -166,6 +211,17 @@
         }
         // the magic starts here
         return this.each(function () {
+
+            var
+                rock,
+                html,
+                $ul,
+                $button,
+                id,
+                name,
+                classname,
+                $this = $(this);
+
             // if iphone, android or windows phone 7, don't replace select
             userAgent = window.navigator.userAgent.toLowerCase();
             if (userAgent.match(/(iphone|android|xblwp7|IEMobile)/)) {
@@ -176,7 +232,7 @@
                 // exit
                 return false;
             }
-            var $this = $(this);
+
             if ($this.data('rocked')) {
                 //console.log($this);
                 //console.log('already rocked');
@@ -186,7 +242,7 @@
                 $this.data('rocked', true);
             }
             if ($this.is('input[type=checkbox]') || $this.is('input[type=radio]')) {
-                var $button, id, name, classname;
+
                 id = $this.attr('id');
                 name = $this.attr('name');
                 classname = settings.buttonClassCheckbox;
@@ -259,50 +315,67 @@
                 }
                 return jQuery;
             } else if ($this.is('select')) {
+
                 $this.hide();
-                var rock = {
+                rock = {
                     buttons:{
                         all_buttons:[],
-                        sameCharacter:[]
+                        sameCharacter:{}
                     },
                     $handle:null
-                },
-                    enter = '',
-                    // array for html result
-                    html = [],
-                    $ul = $('<ul/>', {
-                        'class':'rockdown'
-                    }).addClass($this.attr('class')).attr({
-                            'for':$this.attr('name')
-                        });
+                };
+                enter = '';
+                // array for html result
+                html = [];
+                $ul = $('<ul/>', {
+                    'class':'rockdown'
+                }).addClass($this.attr('class')).attr({
+                        'for':$this.attr('name')
+                    });
+
+
                 if ($this.attr('multiple') === 'multiple') {
                     return jQuery;
                 } else {
                     rock.handleText = $this.find('option:selected').text();
                 }
+
                 // build html
                 html.push('<li><button  type="button" class="handle ' + settings.handleClass + '" aria-valuetext="' + rock.handleText + '">' + rock.handleText + '</button>');
                 html.push('<ul class="' + settings.optionsClass + '">');
+
+
                 // find all <option> and <optgroup>
-                $this.children().each(function () {
+                $this.children().each(function (index, element) {
                     // <option> or <optgroup>
-                    var $this = $(this);
+                    var li,$el = $(element);
                     // hey, it's an <optgroup>
-                    if ($this.is('optgroup')) {
-                        html.push('<li class="' + settings.optClass + '"><span>' + $this.attr('label') + '</span>');
+                    if ($el.is('optgroup')) {
+                        html.push('<li class="' + settings.optClass + '"><span>' + $el.attr('label') + '</span>');
                         html.push('<ul>');
                         // loop the nested <option> elements
-                        $this.children('option').each(function () {
+                        $el.children('option').each(function (index, element) {
                             var $nestedOption = $(this);
-                            html.push(buildLi($nestedOption));
+
+                            li = buildLi($nestedOption);
+                            html.push(li);
+
                         });
                         html.push('</ul>');
                         html.push('</li>');
                     } else {
                         // it's an <option>
-                        html.push(buildLi($this));
+
+                        li = buildLi($el);
+
+                        html.push(li);
+
+
                     }
+
                 });
+                //console.log(rock.buttons.sameCharacter);
+                //console.log(rock.buttons.sameCharacter);
                 html.push('</ul>');
                 html.push('</li>');
                 // simulate the click on the linked label
@@ -310,6 +383,8 @@
                     e.preventDefault();
                     $ul.find('button.handle').focus();
                 });
+
+
                 // a lot of event delegation for the ul
                 rock.$element = $ul
                     // click on a button
@@ -339,8 +414,7 @@
 
                         rock.buttons.lastCharacter = '';
                         rock.buttons.current = e.target;
-                        rock.buttons.all_buttons.pos = $.inArray(e.target, rock.buttons.all_buttons);
-
+                        rock.buttons.pos = $.inArray(e.target, rock.buttons.all_buttons);
                         e.preventDefault();
                         e.stopPropagation();
                         close(rock);
@@ -358,9 +432,9 @@
                         timeout = window.setTimeout(
 
                             function () {
-
+                                console.log('enter reset');
                                 enter = '';
-                            }, settings.searchTimeout); // will work with every browser
+                            }, settings.searchTimeout);
 
                         // enter oder space bar
                         if (e.which === 13 || e.which === 32) {
@@ -374,9 +448,10 @@
                             // arrow down ⇩
                             if (e.which === 40) {
                                 // just be sure, there is a next button
-                                if (rock.buttons.all_buttons.pos + 1 < rock.buttons.all_buttons.length) {
-                                    rock.buttons.all_buttons.pos++;
-                                    rock.buttons.current = rock.buttons.all_buttons[rock.buttons.all_buttons.pos];
+                                if (rock.buttons.pos + 1 < rock.buttons.all_buttons.length) {
+
+                                    rock.buttons.pos = rock.buttons.pos + 1;
+                                    rock.buttons.current = rock.buttons.all_buttons[rock.buttons.pos];
                                     rock.$element.trigger('update');
                                     rock.$element.trigger('set');
                                 }
@@ -385,9 +460,9 @@
                             if (e.which === 38) {
                                 // arrow up ↑
                                 // if we are on the first element, just do nothing
-                                if (rock.buttons.all_buttons.pos > 0) {
-                                    rock.buttons.all_buttons.pos--;
-                                    rock.buttons.current = rock.buttons.all_buttons[rock.buttons.all_buttons.pos];
+                                if (rock.buttons.pos > 0) {
+                                    rock.buttons.pos = rock.buttons.pos - 1;
+                                    rock.buttons.current = rock.buttons.all_buttons[rock.buttons.pos];
                                     rock.$element.trigger('update');
                                     rock.$element.trigger('set');
                                 }
@@ -400,7 +475,7 @@
                         }
                     }).delegate('.' + settings.optionClass + ' button', 'mouseover', function (e) {
                         rock.buttons.current = e.target;
-                        rock.buttons.all_buttons.pos = $.inArray(rock.buttons.current, rock.buttons.all_buttons);
+                        rock.buttons.pos = $.inArray(rock.buttons.current, rock.buttons.all_buttons);
 
                     })
                     // events on the handle
@@ -419,27 +494,32 @@
                         $(this).trigger('click');
                         e.preventDefault();
                     });
+
+
+                html = html.join("");
+
+
+
+
                 // inject a lot of html to the <ul class="rockdown">
-                $ul.append(html.join(""));
+                $ul.append(html);
+
+                $ul.find('.options button').each(function(index,element){
+                                                    pushToArrays(rock,index,element);
+                                                    rock.buttons.all_buttons.push(element);
+                                                });
+
                 rock.$handle = $ul.find('button.handle');
                 // add custom markup
                 rock.$handle.wrapInner($(settings.buttonMarkup));
-                // save all buttons in array
+
 
                 // inject the <ul class="rockdown"> in the dom, after the hidden <select>
-                $ul.find('li.' + settings.optionClass + ' button').each(function (index, element) {
-                    rock.buttons.all_buttons[index] = element;
-                    var sameCharacter, firstCharacter = $(element).text().substr(0, 1);
-                    if (!$.isArray(rock.buttons.sameCharacter[firstCharacter])) {
-                        rock.buttons.sameCharacter[firstCharacter] = [];
-                    }
-                    sameCharacter = [index, element];
-                    rock.buttons.sameCharacter[firstCharacter].push(sameCharacter);
-                });
+
                 rock.buttons.sameCharacter.pos = 0;
                 rock.buttons.current = rock.buttons.all_buttons[0];
-                rock.buttons.all_buttons.pos = 0;
-                rock.buttons['lastCharachter'] = '';
+                rock.buttons.pos = 0;
+                rock.buttons.lastCharachter = '';
                 $this.after($ul);
                 // nice to have: do it bidirectional
                 $this.bind('change', function () {
