@@ -1,4 +1,4 @@
-/* browser*/
+/*global jQuery:false */
 (function ($) {
     "use strict";
     $.fn.rocks = function (options) {
@@ -20,6 +20,8 @@
             checked:'✓',
             unchecked:'✗',
             iconElement:'',
+            replaceCheckedWithValue:false,
+            replaceUncheckedWithValue:false,
             replaceChars:{
                 '(':'<span>',
                 ')':'</span>'
@@ -29,7 +31,8 @@
             }
         },
             changeHandleTextAndAria = function ($element, text) {
-                $element.text(text);
+
+                $element.html(text);
                 /*if (settings.buttonMarkup !== '') {
                  // find the deepest element
                  $element.find('*:not(:has("*"))').html(html);
@@ -43,31 +46,34 @@
             rocks = [],
             buttons = {},
             enter = '',
-            timeout, unsetButton = function ($button) {
-            $button.removeClass(settings.checkedClass);
-            changeHandleTextAndAria($button, settings.unchecked);
-        },
+            timeout,
+            unsetButton = function ($button) {
+
+
+                $button.removeClass(settings.checkedClass);
+                changeHandleTextAndAria($button, $button.unchecked);
+            },
             unsetAllButtons = function (name) {
                 if (typeof name !== "undefined") {
                     $.each(buttons[name], function () {
                         unsetButton(this[0]);
-                        this[1].attr('checked', false);
+                        this[1].prop('checked', false);
                     });
                 }
             },
+            // Array zum durchsuchen per Anfangsbuchstabe
             pushToArrays = function (rock, index, element) {
                 var firstCharacter,
-                    $element,
-                    sameCharacter;
+                    sameCharacter,
+                    $el = $(element);
 
-                $element = $(element);
 
-                if ($element.attr('accesskey')) {
+                if ($el.attr('accesskey')) {
 
-                    firstCharacter = $element.attr('accesskey');
+                    firstCharacter = $el.attr('accesskey');
                 }
                 else {
-                    firstCharacter = $element.text().substr(0, 1);
+                    firstCharacter = $el.text().substr(0, 1);
                 }
                 if (!rock.buttons.sameCharacter[firstCharacter]) {
                     rock.buttons.sameCharacter[firstCharacter] = [];
@@ -82,7 +88,8 @@
                 // button anmachen
                 $button.addClass(settings.checkedClass);
                 // beschriftung
-                changeHandleTextAndAria($button, settings.checked);
+
+                changeHandleTextAndAria($button, $button.checked);
             },
             parseText = function (text) {
                 $.each(settings.replaceChars, function (index, value) {
@@ -94,26 +101,31 @@
                 return text;
             },
             buildLi = function ($element) {
-                var text = '',
-                    accesskey = '',
-                data_value =' data-value="' + $element.attr('value')+'" ';
-                text += settings.iconElement + $element.text();
+                var button = {};
+                button.className = '';
+                button.type = ' type="button" ';
+                button.disabled = '';
+                button.text = '';
+                button.accessskey = '';
+
+                if ($element.attr('accesskey') !== undefined) {
+                    button.accessskey = ' accesskey="' + $element.attr('accesskey') + '" ';
+                }
+
+                button.text += settings.iconElement + $element.text();
+
                 if (settings.replace) {
-                    text = parseText(text);
+                    button.text = parseText(button.text);
                 }
+                if ($element.is(':disabled')) {
+                    button.className = ' class="disabled" ';
+                    button.disabled = ' disabled="disabled" ';
 
-                if($element.attr('accesskey')){
-                   accesskey = ' accesskey="'+$element.attr('accesskey')+'"';
                 }
-
-                return '<li class="' + settings.optionClass + '">' +
-                    '<button type="button"'+
-                    accesskey+
-                    data_value+
-
-                    '>' +
-                    text +
-                    '</button></li>';
+                return '<li role="option" data-value="' +
+                    $element.val() + '" class="' + settings.optionClass + '">' +
+                    '<button ' + button.className + button.accessskey + button.type + '>' +
+                    button.text + '</button></li>';
             },
             removeActive = function ($el) {
                 $el.find('.' + settings.activeClass).removeClass(settings.activeClass);
@@ -182,7 +194,7 @@
                         timeout = window.setTimeout(
 
                             function () {
-                                console.log('reset enter');
+                                //console.log('reset enter');
                                 enter = '';
                             }, settings.searchTimeout);
                         //kein Treffer via Volltext!
@@ -194,7 +206,7 @@
 
                     // "walk"
                     if (rock.buttons.lastCharacter === character) {
-                        console.log('walk');
+                        //console.log('walk');
                         // wenn letztes Element erreicht ist
                         rock.buttons.sameCharacter.pos = rock.buttons.sameCharacter.pos + 1;
 
@@ -228,6 +240,8 @@
         if (options) {
             $.extend(settings, options);
         }
+
+
         // the magic starts here
         return this.each(function () {
 
@@ -239,6 +253,7 @@
                 id,
                 name,
                 classname,
+
                 $this = $(this);
 
             // if iphone, android or windows phone 7, don't replace select
@@ -261,18 +276,41 @@
             }
             if ($this.is('input[type=checkbox]') || $this.is('input[type=radio]')) {
 
+
                 id = $this.attr('id');
                 name = $this.attr('name');
                 classname = settings.buttonClassCheckbox;
+
+
                 if ($this.is('[type="radio"]')) {
                     classname = settings.buttonClassRadio;
                 } else {
                     classname = settings.buttonClassCheckbox;
                 }
+
+                if ($this.prop('disabled')) {
+                    classname += ' disabled';
+                }
+
                 $button = $('<button/>', {
                     'class':classname,
                     'type':'button'
-                }).text(settings.unchecked).wrapInner($(settings.buttonMarkup));
+                });
+
+
+                $button.checked = settings.checked;
+                if (settings.replaceCheckedWithValue) {
+
+                    $button.checked = $this.val();
+                }
+                $button.unchecked = settings.unchecked;
+                if (settings.replaceUncheckedWithValue) {
+
+                    $button.unchecked = $this.val();
+
+                }
+                $button.text($button.unchecked).wrapInner($(settings.buttonMarkup));
+
                 $button.addClass($this.attr('class'));
                 if (typeof name !== "undefined") {
                     if (!buttons.hasOwnProperty(name)) {
@@ -281,39 +319,78 @@
                     // couple
                     buttons[name].push([$button, $this]);
                 }
+                // radio/checkobx ausblenden
                 $this.hide();
-                $this.bind('click',
+                $this.bind('jclick click',
                     function (e) {
+                        //console.log('type: '+e.type);
                         e.stopPropagation();
                         e.preventDefault();
-                        if ($this.is('input[type="radio"]:checked')) {
-                        } else if ($this.is('input[type="radio"]')) {
-                            unsetAllButtons(name);
-                            $this.attr('checked', true);
-                            $this.trigger('change');
-                            $button.trigger('rock_check');
-                        } else if ($this.is('input[type="checkbox"]:checked')) {
-                            $this.attr('checked', false);
-                            $this.trigger('change');
-                            $button.trigger('rock_uncheck');
-                        } else if ($this.is('input[type="checkbox"]')) {
-                            $this.attr('checked', true);
-                            $this.trigger('change');
-                            $button.trigger('rock_check');
+                        var disabled = $this.prop('disabled');
+
+
+                        if (typeof disabled !== 'undefined' && disabled !== false) {
+                            //console.log('disabled');
+                            return;
                         }
-                    }).bind('change', function (e) {
+
+                        if ($this.is('input[type="radio"]')) {
+                            //console.log('radio');
+                            if ($this.prop('checked')) {
+                                return;
+                            }
+                            else {
+                                //console.log('radio uncheck');
+                                unsetAllButtons(name);
+                                $this.prop('checked', true);
+                                $this.trigger('change');
+                                $button.trigger('rock_check');
+                            }
+                            return;
+                        }
+
+                        if ($this.is('input[type="checkbox"]')) {
+                            //console.log('checkbox');
+                            if ($this.prop('checked')) {
+                                //console.log('checkbox ist checked');
+                                $this.prop('checked', false);
+                                $this.trigger('change');
+                                $button.trigger('rock_uncheck');
+                            }
+                            else {
+                                //console.log('checkbox ist nicht uncheck');
+                                $this.prop('checked', true);
+                                $this.trigger('change');
+                                $button.trigger('rock_check');
+                            }
+
+
+
+                        }
+
+                    }).bind('change',
+                    function (e) {
+                        //console.log('change');
                         e.stopPropagation();
+                        e.preventDefault();
+                    }).bind('focusin', function () {
+                        $button.trigger('focus');
                     });
                 // just for ie6 to ie8
-                $('label[for="' + id + '"]').bind('click', function (e) {
+                $('label[for="' + id + '"]').on('click', function (e) {
+                    if ($(e.target).is('a')) {
+                        return;
+                    }
+                           //console.log('click on label');
                     e.preventDefault();
-                    $this.trigger('click');
+                    $this.trigger('jclick');
                 });
                 $button.bind('click.rock',
                     function (e) {
+                        //console.log('click.rock');
                         e.preventDefault();
                         e.stopPropagation();
-                        $this.trigger('click');
+                        $this.trigger('jclick');
                     }).bind('rock_check',
                     function () {
                         setButton($button);
@@ -324,7 +401,8 @@
                         settings.onChange.call($this);
                     }).bind('rock_init', function () {
                         setButton($button);
-                        settings.onChange.call($this);
+                        // inital nicht feuern°!
+                        //settings.onChange.call($this);
                     });
                 $this.after($button);
                 // initial
@@ -369,6 +447,7 @@
                     var li, $el = $(element);
                     // hey, it's an <optgroup>
                     if ($el.is('optgroup')) {
+
                         html.push('<li class="' + settings.optClass + '"><span>' + $el.attr('label') + '</span>');
                         html.push('<ul>');
                         // loop the nested <option> elements
@@ -408,6 +487,7 @@
                     function () {
 
                         var $target = $(rock.buttons.current);
+
                         changeHandleTextAndAria(rock.$handle, $target.text());
                         rock.$element.find('.hover').removeClass('hover');
                         $target.addClass('hover');
@@ -423,26 +503,31 @@
                         $target.addClass(settings.activeClass);
                         changeHandleTextAndAria(rock.$handle, $target.text());
                         $this.val($target.parent().attr('data-value'));
+
                         // fire callback
+                        $this.trigger('change');
                         settings.onChange.call($this);
-                    }).delegate('li.option button', 'mousedown.rock',
+                    }).on('mousedown.rock', 'li.option button:not(.disabled)',
                     function (e) {
 
                         rock.buttons.lastCharacter = '';
                         rock.buttons.current = e.target;
-                        rock.buttons.pos = $(e.target).data('index');
-
+                        // position ermitteln
+                        rock.buttons.pos = $.inArray(e.target, rock.buttons.all_buttons);
                         e.preventDefault();
                         e.stopPropagation();
+
+
                         close(rock);
                         rock.$element.trigger('update');
                         rock.$element.trigger('set');
-                    }).delegate('li.option button', 'mouseup.rock', function (e) {
+                    }).delegate('li.option button:not(.disabled)', 'mouseup.rock',
+                    function (e) {
                         e.preventDefault();
+
+
                         $(this).trigger('mousedown');
-                    })
-                    // search, navigate on key event on a button or the handler
-                    .bind('keydown.rock',
+                    }).bind('keydown.rock',
                     function (e) {
                         var character;
 
@@ -484,7 +569,7 @@
                             character = String.fromCharCode(e.which);
                             search(rock, character);
                         }
-                    }).delegate('.' + settings.optionClass + ' button', 'mouseover', function (e) {
+                    }).delegate('.' + settings.optionClass + ' button:not(.disabled)', 'mouseover', function (e) {
                         rock.buttons.current = e.target;
                         rock.buttons.pos = $.inArray(rock.buttons.current, rock.buttons.all_buttons);
 
@@ -513,9 +598,11 @@
                 // inject a lot of html to the <ul class="rockdown">
                 $ul.append(html);
 
-                $ul.find('.options button').each(function (index, element) {
-                    $(element).data('index',index);
+
+                $ul.find('.options button:not(.disabled)').each(function (index, element) {
+                    // was passiert hier?
                     pushToArrays(rock, index, element);
+                    // und wofür ist dieses Array?
                     rock.buttons.all_buttons.push(element);
                 });
 
@@ -530,14 +617,20 @@
                 rock.buttons.current = rock.buttons.all_buttons[0];
                 rock.buttons.pos = 0;
                 rock.buttons.lastCharachter = '';
-                $this.after($ul);
+                $this.before($ul);
                 // nice to have: do it bidirectional
-                $this.bind('change', function () {
+
+                // fuer jquery validate
+                $this.on('focusin', function () {
+                    rock.$handle.trigger('focus');
+                });
+
+                $this.on('change', function () {
                     var $this = $(this),
                         value = $this.val(),
-                        text = $this.find('option[value=' + value + ']').first().html();
+                        text = $this.find('option[value="' + value + '"]').first().html();
                     changeHandleTextAndAria(rock.$handle, text);
-                    $ul.find('.' + settings.activeClass).removeClass(settings.activeClass).find('ul li[data-value=' + value + '] button').addClass(settings.activeClass);
+                    $ul.find('.' + settings.activeClass).removeClass(settings.activeClass).find('ul li[data-value="' + value + '"] button').addClass(settings.activeClass);
                 });
                 // push all replaced <select> to stack
                 rocks.push(rock);
