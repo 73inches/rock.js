@@ -3,6 +3,9 @@
 ul.rockdown {
 	font-size: 13px;
 	width: 180px;
+
+}
+ul.rockdown.open {
     position: relative;
 }
 
